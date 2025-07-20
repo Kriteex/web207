@@ -2,6 +2,7 @@
 import httpx
 import os
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN")
@@ -55,3 +56,17 @@ async def fetch_campaigns(include_insights=False):
             results.append({"account_id": acc_id, "campaigns": campaigns})
 
         return results
+
+
+async def create_campaign(account_id: str, name: str, objective: str = "OUTCOME_SALES", status: str = "PAUSED"):
+    url = f"{BASE_URL}/act_{account_id}/campaigns"
+    params = {
+        "access_token": ACCESS_TOKEN,
+        "name": name,
+        "objective": objective,
+        "status": status,
+        "special_ad_categories": json.dumps([])  # musí být jako JSON-encoded string
+    }
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(url, data=params)
+        return resp.json()
