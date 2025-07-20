@@ -7,7 +7,7 @@ load_dotenv()
 ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN")
 BASE_URL = "https://graph.facebook.com/v19.0"
 
-async def fetch_campaigns():
+async def fetch_campaigns(include_insights=False):
     async with httpx.AsyncClient() as client:
         accounts_resp = await client.get(f"{BASE_URL}/me/adaccounts?access_token={ACCESS_TOKEN}")
         accounts = accounts_resp.json().get("data", [])
@@ -22,6 +22,21 @@ async def fetch_campaigns():
 
             for campaign in campaigns:
                 campaign_id = campaign["id"]
+
+                if include_insights:
+                    insights_resp = await client.get(
+                        f"{BASE_URL}/{campaign_id}/insights?access_token={ACCESS_TOKEN}&fields=spend,purchase_roas"
+                    )
+                    insights_data = insights_resp.json().get("data", [])
+                    if insights_data:
+                        insights = insights_data[0]
+                        campaign["spend"] = float(insights.get("spend", 0))
+                        roas = insights.get("purchase_roas", [])
+                        campaign["revenue"] = float(roas[0].get("value", 0)) if roas else 0
+                    else:
+                        campaign["spend"] = 0.0
+                        campaign["revenue"] = 0.0
+
                 adsets_resp = await client.get(
                     f"{BASE_URL}/{campaign_id}/adsets?access_token={ACCESS_TOKEN}&fields=id,name"
                 )
@@ -33,7 +48,6 @@ async def fetch_campaigns():
                         f"{BASE_URL}/{adset_id}/ads?access_token={ACCESS_TOKEN}&fields=id,name"
                     )
                     ads = ads_resp.json().get("data", [])
-
                     adset["ads"] = ads
 
                 campaign["adsets"] = adsets
