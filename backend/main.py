@@ -1,8 +1,10 @@
 # backend/main.py
 from pydantic import BaseModel
-from fastapi import FastAPI, Form
-from backend.ads_api import fetch_campaigns, create_campaign, create_adset
+from fastapi import FastAPI, File, UploadFile, Form
+from backend.ads_api import fetch_campaigns, create_campaign, create_adset, upload_ad_image, create_adcreative
 from backend.database import init_db
+from fastapi.responses import JSONResponse
+import os
 
 app = FastAPI()
 
@@ -56,4 +58,49 @@ async def api_create_adset(request: AdSetCreateRequest):
         targeting=request.targeting,
         status=request.status,
     )
+    return result
+
+
+class AdCreativeCreateRequest(BaseModel):
+    account_id: str
+    name: str
+    title: str
+    body: str
+    object_url: str
+    image_hash: str
+
+@app.post("/create_adcreative")
+async def api_create_adcreative(request: AdCreativeCreateRequest):
+    result = await create_adcreative(
+        account_id=request.account_id,
+        name=request.name,
+        title=request.title,
+        body=request.body,
+        object_url=request.object_url,
+        image_hash=request.image_hash
+    )
+    return result
+
+
+
+class AdCreateRequest(BaseModel):
+    account_id: str
+    adset_id: str
+    creative_id: str
+    name: str
+    status: str
+
+@app.post("/create_ad")
+async def api_create_ad(req: AdCreateRequest):
+    return await create_ad(req.account_id, req.adset_id,
+                           req.creative_id, req.name, req.status)
+
+
+@app.post("/upload_ad_image")
+async def api_upload_ad_image(account_id: str = Form(...), file: UploadFile = File(...)):
+    file_location = f"temp_{file.filename}"
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+    result = await upload_ad_image(account_id, file_location)
+    os.remove(file_location)
     return result

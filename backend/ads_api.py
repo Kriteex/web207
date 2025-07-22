@@ -1,6 +1,7 @@
 import httpx
 import json
 import os
+import aiofiles
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -95,3 +96,49 @@ async def create_adset(account_id: str, campaign_id: str, name: str, daily_budge
     async with httpx.AsyncClient() as client:
         resp = await client.post(url, json=payload)
         return resp.json()
+
+
+async def create_ad(account_id: str, adset_id: str,
+                    creative_id: str, name: str, status: str = "PAUSED"):
+    url = f"{BASE_URL}/act_{account_id}/ads"
+    payload = {
+        "name": name,
+        "adset_id": adset_id,
+        "creative": {"creative_id": creative_id},
+        "status": status,
+        "access_token": ACCESS_TOKEN
+    }
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(url, json=payload)
+        return resp.json()
+
+
+async def upload_ad_image(account_id: str, image_path: str):
+    url = f"{BASE_URL}/act_{account_id}/adimages"
+    async with httpx.AsyncClient() as client:
+        with open(image_path, "rb") as f:
+            files = {'filename': (os.path.basename(image_path), f, 'image/jpeg')}
+            data = {"access_token": ACCESS_TOKEN}
+            response = await client.post(url, data=data, files=files)
+    return response.json()
+
+async def create_adcreative(account_id, name, title, body, object_url, image_hash):
+    url = f"{BASE_URL}/act_{account_id}/adcreatives"
+    payload = {
+        "name": name,
+        "title": title,
+        "body": body,
+        "object_story_spec": json.dumps({
+            "page_id": os.getenv("META_PAGE_ID"),
+            "link_data": {
+                "message": body,
+                "link": object_url,
+                "image_hash": image_hash
+            }
+        }),
+        "access_token": ACCESS_TOKEN
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, data=payload)
+        return response.json()
