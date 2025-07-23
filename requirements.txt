@@ -10,3 +10,4 @@ schedule
 asyncpg
 python-multipart
 aiofiles
+Pillow

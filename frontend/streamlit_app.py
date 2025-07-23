@@ -4,10 +4,12 @@ import sys
 import os
 import json
 from pathlib import Path
+from PIL import Image
 import requests
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from scripts.ingest_data import load_campaigns
 from frontend.utils import display_campaigns
+import base64
 
 API_BASE = "http://localhost:8000"
 
@@ -37,6 +39,142 @@ page = st.sidebar.radio("Vyber sekci", ["Ads Dashboard", "Ads Management", "Ads 
 # -------------------------
 if page == "Ads Dashboard":
     st.title("Madgicx MVP Dashboard – 📈 Ads Dashboard")
+
+    def img_to_base64(path):
+        try:
+            with open(path, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+        except:
+            return ""  # fallback
+
+    # --- CSS pro card ---
+    SW_CSS = """
+    <style>
+    .sw-card{
+      background:#1e1e2f;
+      color:#fff;
+      border-radius:16px;
+      padding:18px 22px 16px 22px;
+      font-family: sans-serif;
+      box-shadow:0 2px 6px rgba(0,0,0,.2);
+    }
+    .sw-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+      font-size:16px;
+      font-weight:600;
+    }
+    .sw-head .num{
+      color:#818cf8;
+    }
+    .sw-avatars{
+      display:flex;
+      align-items:center;
+    }
+    .sw-avatars img{
+      width:32px;height:32px;border-radius:50%;
+      border:2px solid #1e1e2f;
+      margin-left:-8px;
+    }
+    .sw-row{
+      font-size:14px;
+      margin:4px 0;
+      line-height:1.2;
+    }
+    .sw-row span.time{
+      color:#bbb;font-size:12px;font-style:italic;margin-left:4px;
+    }
+    .sw-progress-label{
+      margin-top:14px;
+      margin-bottom:6px;
+      font-size:13px;
+      font-weight:600;
+    }
+    .sw-progress-wrapper{
+      position:relative;
+      width:100%;
+      height:10px;
+      background:#3b3b4f;
+      border-radius:6px;
+      overflow:hidden;
+    }
+    .sw-progress-fill{
+      position:absolute;
+      height:100%;
+      left:0;top:0;
+      background:linear-gradient(90deg,#a78bfa,#6366f1);
+    }
+    .sw-progress-value{
+      text-align:right;
+      font-size:12px;
+      margin-top:4px;
+      color:#ccc;
+    }
+    </style>
+    """
+
+    # --- DATA ---
+    people = [
+        {
+            "name": "Niklas",
+            "action": "Set budget from $5,132 to $740",
+            "time": "1 hour ago",
+            "avatar": "frontend/media/avatars/niklas.jpg"
+        },
+        {
+            "name": "Sophie",
+            "action": "Set budget from $740 to $2,340",
+            "time": "4 hours ago",
+            "avatar": "frontend/media/avatars/sophie.jpg"
+        },
+        {
+            "name": "Anna",
+            "action": "No recent change",
+            "time": "",
+            "avatar": "frontend/media/avatars/anna.jpg"
+        }
+    ]
+
+    automation_pct = 70  # procenta
+
+    # --- RENDER ---
+    left_box, right_space = st.columns([0.4, 0.6])
+
+    with left_box:
+        st.markdown(SW_CSS, unsafe_allow_html=True)
+
+        # Avatary -> base64, aby se 100% vykreslily
+        avatars_html = ""
+        for p in people:
+            b64 = img_to_base64(p["avatar"])
+            if b64:
+                avatars_html += f'<img src="data:image/jpeg;base64,{b64}"/>'
+
+        rows_html = ""
+        for p in people:
+            rows_html += f'<div class="sw-row"><b>{p["name"]}</b> – {p["action"]}<span class="time">{p["time"]}</span></div>'
+
+        box_html = f"""
+        <div class="sw-card">
+          <div class="sw-head">
+            <div>Save work for <span class="num">{len(people)}</span> people</div>
+            <div class="sw-avatars">{avatars_html}</div>
+          </div>
+
+          {rows_html}
+
+          <div class="sw-progress-label">Percent of account automation</div>
+          <div class="sw-progress-wrapper">
+            <div class="sw-progress-fill" style="width:{automation_pct}%"></div>
+          </div>
+          <div class="sw-progress-value">{automation_pct}%</div>
+        </div>
+        """
+        st.markdown(box_html, unsafe_allow_html=True)
+
+
 
     # Kampaně
     if "campaigns_data" not in st.session_state:
