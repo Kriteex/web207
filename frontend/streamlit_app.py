@@ -418,7 +418,7 @@ if page == "Ads Dashboard":
 
         # ------------------------------------------
 
-        head_l, head_r = st.columns([0.82, 0.18], vertical_alignment="center")
+        head_l, head_r = st.columns([0.82, 0.18])
         with head_l:
             st.markdown('<div class="col-title"><h3>📦 Campaigns</h3></div>', unsafe_allow_html=True)
         with head_r:
