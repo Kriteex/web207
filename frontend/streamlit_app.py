@@ -65,8 +65,92 @@ form button[type="submit"]:hover {
 """
 st.markdown(GLOBAL_BTN_CSS, unsafe_allow_html=True)
 
-st.sidebar.title("📊 Menu")
-page = st.sidebar.radio("Vyber sekci", ["Ads Dashboard", "Ads Management", "Ads Library"])
+# --- MADGICX DARK SKIN (background, sidebar, text colors) ---
+MADGICX_CSS = """
+<style>
+/* Globální dark pozadí */
+html, body, [data-testid="stAppViewContainer"]{
+    background: #0f0f1a !important;
+    color: #ffffff !important;
+}
+/* Horní defaultní header pryč (Streamlit burger atd.) */
+header[data-testid="stHeader"] {visibility: hidden; height: 0px;}
+/* Sidebar jako levý rail */
+[data-testid="stSidebar"]{
+    background: #111126 !important;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    padding-top: 30px !important;
+    width: 78px !important;          /* zúžení */
+}
+[data-testid="stSidebar"] > div {    /* uvnitř align center */
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
+
+/* Radio – odstraníme default bulletky a zarovnáme ikony doprostřed */
+div[role="radiogroup"] > label{
+    background: transparent !important;
+    border-radius: 12px;
+    padding: 12px 6px 10px 6px !important;
+    margin-bottom: 6px !important;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .15s, border .15s;
+}
+div[role="radiogroup"] > label:hover{
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+div[role="radiogroup"] > label > div{ /* text uvnitř radio labelu */
+    text-align: center !important;
+    font-size: 24px !important;      /* velikost emoji */
+    line-height: 24px !important;
+    padding: 0 !important;
+    color: #a5a5ff !important;
+}
+div[role="radiogroup"] input{display:none;} /* schová input */
+
+div[role="radiogroup"] > label[data-checked="true"]{
+    background: linear-gradient(180deg,#2a2a48,#1c1c34) !important;
+    border: 1px solid rgba(129,140,248,0.4);
+}
+div[role="radiogroup"] > label[data-checked="true"] > div{
+    color:#ffffff !important;
+    text-shadow:0 0 4px rgba(129,140,248,0.5);
+}
+
+/* Hlavní blok (vpravo) a horní titulek posuneme, aby to sedělo s úzkým sidebar) */
+.block-container{
+    padding-top: 1.2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+/* Sekční horizontální čáry */
+hr, .stMarkdown hr{
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin: 22px 0;
+}
+</style>
+"""
+st.markdown(MADGICX_CSS, unsafe_allow_html=True)
+
+# --- Ikonkový rail ---
+MENU = {
+    "Ads Dashboard": "📊",
+    "Ads Management": "⚙️",
+    "Ads Library":   "🎞️",
+}
+
+page = st.sidebar.radio(
+    label="",
+    options=list(MENU.keys()),
+    format_func=lambda x: MENU[x],   # zobraz jen ikonu
+    key="nav_menu",
+)
 
 # -------------------------
 # ADS DASHBOARD
@@ -449,6 +533,25 @@ if page == "Ads Dashboard":
 # ADS MANAGEMENT
 # -------------------------
 elif page == "Ads Management":
+    # --- Light mode override for this page only ---
+    st.markdown("""
+        <style>
+        [data-testid="stAppViewContainer"]{
+            background:#ffffff !important;
+            color:#111 !important;
+        }
+        /* texty ve formulářích + markdown */
+        h1,h2,h3,h4,h5,h6,p,span,label,
+        div[data-testid="stMarkdown"],
+        .stTextInput label,.stSelectbox label,
+        .stNumberInput label,.stFileUploader label{
+            color:#111 !important;
+        }
+        /* necháme sidebar tmavý */
+        [data-testid="stSidebar"]{background:#111126 !important;}
+        </style>
+        """, unsafe_allow_html=True)
+    
     st.title("Madgicx MVP Dashboard – ⚙️ Ads Management")
 
     st.markdown("---")
