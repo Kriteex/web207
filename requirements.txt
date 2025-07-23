@@ -11,3 +11,4 @@ asyncpg
 python-multipart
 aiofiles
 Pillow
+streamlit-extras

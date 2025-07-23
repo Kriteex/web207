@@ -12,6 +12,7 @@ from frontend.utils import display_campaigns
 import base64
 from streamlit.components.v1 import html as st_html
 import textwrap
+from streamlit_extras.stylable_container import stylable_container
 
 API_BASE = "http://localhost:8000"
 
@@ -248,20 +249,91 @@ if page == "Ads Dashboard":
     # -------------- END MONTHLY GOALS BOX --------------
 
 
-    # Kampaně
-    if "campaigns_data" not in st.session_state:
-        st.session_state["campaigns_data"] = None
+    with stylable_container(
+        key="camp_card",
+        css_styles="""
+        {
+          background:#1e1e2f;
+          color:#fff;
+          border-radius:16px;
+          padding:18px 22px 20px 22px;
+          box-shadow:0 2px 6px rgba(0,0,0,.2);
+          margin-top:20px;
+          font-family:sans-serif;
+        }
+        """
+    ):
+        # --- přidej TENTO CSS blok pro tlačítko ---
+        st.markdown("""
+        <style>
+        /* Styluj přímo JAKÉKOLI tlačítko uvnitř #camp_card */
+        #camp_card button{
+            background:linear-gradient(90deg,#818cf8,#6366f1) !important;
+            border:0 !important;
+            border-radius:8px !important;
+            padding:6px 16px !important;
+            box-shadow:0 2px 4px rgba(0,0,0,.25);
+            cursor:pointer;
+        }
+        #camp_card button:hover{
+            filter:brightness(1.12);
+        }
 
-    if st.button("Načíst kampaně", key="load_campaigns_button"):
-        with st.spinner("Načítám kampaně…"):
-            try:
-                st.session_state["campaigns_data"] = fetch_campaigns_via_api(include_insights=True)
-            except Exception as e:
-                st.error("Nepodařilo se načíst kampaně.")
-                st.exception(e)
+        /* Donutíme text být bílý a čitelný – chytáme všechny možné vnořené tagy */
+        #camp_card button, 
+        #camp_card button *{
+            color:#ffffff !important;
+            font-weight:600 !important;
+            font-size:13px !important;
+            letter-spacing:0.2px;
+            text-shadow:0 0 2px rgba(0,0,0,.4);
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
-    if st.session_state["campaigns_data"]:
-        display_campaigns(st.session_state["campaigns_data"])
+        st.markdown("""
+        <style>
+        #camp_card .col-title, 
+        #camp_card .col-button{
+            display:flex;
+            align-items:center;   /* vertikální zarovnání na střed */
+            height:38px;          /* cca výška tlačítka */
+        }
+        #camp_card .col-title h3{
+            margin:0 !important;
+            line-height:38px;     /* stejné jako výška tlačítka */
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+
+        # ------------------------------------------
+
+        head_l, head_r = st.columns([0.82, 0.18], vertical_alignment="center")
+        with head_l:
+            st.markdown('<div class="col-title"><h3>📦 Campaigns</h3></div>', unsafe_allow_html=True)
+        with head_r:
+            st.markdown('<div class="col-button">', unsafe_allow_html=True)
+            refresh_clicked = st.button("↻ Refresh", key="load_campaigns_button", type="primary")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+
+        # --- původní logika beze změny ---
+        if "campaigns_data" not in st.session_state:
+            st.session_state["campaigns_data"] = None
+
+        if refresh_clicked:
+            with st.spinner("Načítám kampaně…"):
+                try:
+                    st.session_state["campaigns_data"] = fetch_campaigns_via_api(include_insights=True)
+                except Exception as e:
+                    st.error("Nepodařilo se načíst kampaně.")
+                    st.exception(e)
+
+        if st.session_state["campaigns_data"]:
+            display_campaigns(st.session_state["campaigns_data"])
+        # ---------------------------------
+
 
 
 # -------------------------
