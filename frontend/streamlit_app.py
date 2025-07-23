@@ -10,6 +10,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from scripts.ingest_data import load_campaigns
 from frontend.utils import display_campaigns
 import base64
+from streamlit.components.v1 import html as st_html
+import textwrap
 
 API_BASE = "http://localhost:8000"
 
@@ -174,6 +176,76 @@ if page == "Ads Dashboard":
         """
         st.markdown(box_html, unsafe_allow_html=True)
 
+
+    # ---------------- NEW: MONTHLY GOALS BOX (fixed) ----------------
+    with right_space:
+        MG_CSS = """
+        <style>
+        .mg-card{
+          background:#1e1e2f;
+          color:#fff;
+          border-radius:16px;
+          padding:18px 22px 16px 22px;
+          font-family: sans-serif;
+          box-shadow:0 2px 6px rgba(0,0,0,.2);
+          margin-bottom:20px;
+        }
+        .mg-head{
+          font-size:16px;
+          font-weight:600;
+          margin-bottom:12px;
+          display:flex;
+          align-items:center;
+          gap:6px;
+        }
+        .mg-row{ margin:12px 0; }
+        .mg-row-label{
+          font-size:13px;
+          color:#ddd;
+          margin-bottom:4px;
+          display:flex;
+          justify-content:space-between;
+        }
+        .mg-bar{
+          width:100%;height:10px;background:#3b3b4f;border-radius:6px;overflow:hidden;
+        }
+        .mg-fill{
+          height:100%;background:linear-gradient(90deg,#34d399,#059669);
+        }
+        </style>
+        """
+
+        goals = [
+            {"name": "Revenue", "current": 34500, "target": 50000, "fmt": "${:,.0f}"},
+            {"name": "Spend",   "current": 18000, "target": 20000, "fmt": "${:,.0f}"},
+            {"name": "ROAS",    "current": 1.92,  "target": 2.50,  "fmt": "{:,.2f}x"},
+        ]
+
+        rows = []
+        for g in goals:
+            pct = min(100, int((g["current"] / g["target"]) * 100)) if g["target"] else 0
+            curr = g["fmt"].format(g["current"])
+            targ = g["fmt"].format(g["target"])
+            rows.append(
+                f'<div class="mg-row">'
+                f'  <div class="mg-row-label"><span>{g["name"]}</span>'
+                f'  <span>{curr} / {targ} ({pct}%)</span></div>'
+                f'  <div class="mg-bar"><div class="mg-fill" style="width:{pct}%"></div></div>'
+                f'</div>'
+            )
+        rows_html = "".join(rows)
+
+        mg_html = (
+            MG_CSS +
+            '<div class="mg-card">'
+            '  <div class="mg-head">📅 Monthly Goals</div>'
+            f'  {rows_html}'
+            '</div>'
+        )
+
+        # použijeme komponentu, aby se nic neescapovalo
+        st_html(mg_html, height=260, scrolling=False)
+    # -------------- END MONTHLY GOALS BOX --------------
 
 
     # Kampaně
