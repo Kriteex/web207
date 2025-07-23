@@ -3,6 +3,7 @@ import streamlit as st
 import sys
 import os
 import json
+from pathlib import Path
 import requests
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from scripts.ingest_data import load_campaigns
@@ -246,6 +247,40 @@ elif page == "Ads Management":
 # -------------------------
 # ADS LIBRARY
 # -------------------------
+
+
 elif page == "Ads Library":
-    st.title("Madgicx MVP Dashboard – 📚 Ads Library")
-    st.info("Tato sekce bude zobrazovat uložené creatives, obrázky a archiv kampaní (TODO).")
+    st.markdown("## 🎞️ Ads Library – Galerie")
+
+    media_dir = os.path.join("frontend", "media", "ads")
+    allowed_extensions = [".mp4", ".jpg", ".jpeg", ".png"]
+    files = [f for f in os.listdir(media_dir) if os.path.splitext(f)[1].lower() in allowed_extensions]
+
+    columns = [[] for _ in range(4)]
+    for idx, file in enumerate(sorted(files)):
+        columns[idx % 4].append(file)
+
+    st.markdown(
+        """
+        <style>
+        .gallery-col > div {
+            margin-bottom: 5px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    col_streamlit = st.columns(4)
+    for col_idx, file_list in enumerate(columns):
+        with col_streamlit[col_idx]:
+            for filename in file_list:
+                filepath = os.path.join(media_dir, filename)
+                ext = os.path.splitext(filename)[1].lower()
+                with st.container():
+                    if ext == ".mp4":
+                        with open(filepath, "rb") as f:
+                            st.video(f.read())
+                    elif ext in [".jpg", ".jpeg", ".png"]:
+                        with open(filepath, "rb") as f:
+                            st.image(f.read())
