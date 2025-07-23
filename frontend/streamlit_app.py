@@ -645,33 +645,67 @@ elif page == "Ads Library":
 
     media_dir = os.path.join("frontend", "media", "ads")
     allowed_extensions = [".mp4", ".jpg", ".jpeg", ".png"]
-    files = [f for f in os.listdir(media_dir) if os.path.splitext(f)[1].lower() in allowed_extensions]
 
-    columns = [[] for _ in range(4)]
-    for idx, file in enumerate(sorted(files)):
-        columns[idx % 4].append(file)
+    files = [
+        f for f in os.listdir(media_dir)
+        if os.path.splitext(f)[1].lower() in allowed_extensions
+    ]
 
-    st.markdown(
-        """
+    # --- Rozdělení podle prefixu názvu (case-insensitive) ---
+    products = [f for f in files if os.path.basename(f).lower().startswith("product")]
+    avatars  = [f for f in files if os.path.basename(f).lower().startswith("avatar")]
+    others   = [f for f in files if f not in products and f not in avatars]
+
+    # --- CSS: zachování "flex" feelingu (žádné mezery) ---
+    st.markdown("""
         <style>
-        .gallery-col > div {
-            margin-bottom: 5px;
+        div[data-testid="column"] { padding: 0 !important; }
+        video, img {
+            width: 100% !important;
+            height: auto !important;
+            margin-bottom: -4px;
+            display: block;
+        }
+        .section-title{
+            margin: 22px 0 10px 0;
+            font-weight: 600;
+            font-size: 18px;
+            color: #fff;
         }
         </style>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
-    col_streamlit = st.columns(4)
-    for col_idx, file_list in enumerate(columns):
-        with col_streamlit[col_idx]:
-            for filename in file_list:
-                filepath = os.path.join(media_dir, filename)
-                ext = os.path.splitext(filename)[1].lower()
+    def render_grid(file_list, cols=4):
+        if not file_list:
+            return
+        # vytvoříme 4 vertikální sloupce a “sypeme” do nich soubory postupně
+        columns = st.columns(cols)
+        for idx, fname in enumerate(sorted(file_list)):
+            col = columns[idx % cols]
+            fpath = os.path.join(media_dir, fname)
+            ext = os.path.splitext(fname)[1].lower()
+            with col:
                 with st.container():
                     if ext == ".mp4":
-                        with open(filepath, "rb") as f:
+                        with open(fpath, "rb") as f:
                             st.video(f.read())
-                    elif ext in [".jpg", ".jpeg", ".png"]:
-                        with open(filepath, "rb") as f:
+                    else:
+                        with open(fpath, "rb") as f:
                             st.image(f.read())
+
+    # --- Sekce PRODUCTS ---
+    if products:
+        st.markdown("<div class='section-title'>🛍️ Products</div>", unsafe_allow_html=True)
+        render_grid(products)
+        st.markdown("---")
+
+    # --- Sekce AVATARS ---
+    if avatars:
+        st.markdown("<div class='section-title'>👤 Avatars</div>", unsafe_allow_html=True)
+        render_grid(avatars)
+        st.markdown("---")
+
+    # --- Sekce OTHERS ---
+    if others:
+        st.markdown("<div class='section-title'>📦 Others</div>", unsafe_allow_html=True)
+        render_grid(others)
