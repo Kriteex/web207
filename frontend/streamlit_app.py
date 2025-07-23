@@ -34,6 +34,37 @@ OBJECTIVE_OPTIMIZATION_MAP = {
 
 # Layout + sidebar
 st.set_page_config(page_title="Madgicx MVP Dashboard", layout="wide")
+
+# --- GLOBAL BUTTON STYLE (jednotný vzhled všech tlačítek) ---
+GLOBAL_BTN_CSS = """
+<style>
+/* Všechna tlačítka Streamlitu */
+.stButton > button,
+.stDownloadButton > button,
+div[data-testid="baseButton-secondary"] > button,
+div[data-testid="baseButton-primary"] > button,
+form button[type="submit"] {
+    background: linear-gradient(90deg,#818cf8,#6366f1) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    padding: 6px 16px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,.25) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    text-shadow: 0 0 2px rgba(0,0,0,.4);
+}
+.stButton > button:hover,
+.stDownloadButton > button:hover,
+form button[type="submit"]:hover {
+    filter: brightness(1.12);
+}
+</style>
+"""
+st.markdown(GLOBAL_BTN_CSS, unsafe_allow_html=True)
+
 st.sidebar.title("📊 Menu")
 page = st.sidebar.radio("Vyber sekci", ["Ads Dashboard", "Ads Management", "Ads Library"])
 
@@ -248,7 +279,112 @@ if page == "Ads Dashboard":
         st_html(mg_html, height=260, scrolling=False)
     # -------------- END MONTHLY GOALS BOX --------------
 
+    # -------------- NEW: MAGICAL RECOMMENDATIONS BOX --------------
+    # CSS (chip štítky atd.)
+    RECS_CSS = """
+    <style>
+    .rec-chip{
+      display:inline-block;
+      background:#2d2d40;
+      color:#c9c9ff;
+      padding:2px 8px;
+      border-radius:12px;
+      font-size:10px;
+      margin-right:4px;
+      margin-top:2px;
+    }
+    .rec-row{
+      padding:8px 0 10px 0;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+    .rec-title{
+      font-size:14px;
+      font-weight:600;
+      margin-bottom:2px;
+    }
+    .rec-why{
+      font-size:12px;
+      color:#bbb;
+      margin-bottom:4px;
+    }
+    </style>
+    """
 
+    st.markdown(RECS_CSS, unsafe_allow_html=True)
+
+    # Demo data – později nahradíš voláním AI / backendu
+    if "dismissed_recs" not in st.session_state:
+        st.session_state["dismissed_recs"] = set()
+
+    recommendations = [
+        {
+            "title": "Increase budget on top 3 ROAS ad sets",
+            "why":  "ROAS > 3.0, but spend < 20% of daily budget. Estimated +12% revenue.",
+            "tags": ["Budget", "Meta", "ROAS"],
+            "action_key": "launch_budget"
+        },
+        {
+            "title": "Pause low CTR creatives",
+            "why":  "CTR < 0.7% for 5 days. Reallocate spend to higher CTR assets.",
+            "tags": ["Creative", "CTR", "Optimization"],
+            "action_key": "pause_creatives"
+        },
+        {
+            "title": "Test new hook for Summer sale",
+            "why":  "Engagement down 18% WoW on primary audience. Add fresh intro line.",
+            "tags": ["Copywriting", "Seasonal", "Idea"],
+            "action_key": "test_hook"
+        }
+    ]
+
+    with stylable_container(
+        key="recs_card",
+        css_styles="""
+        {
+          background:#1e1e2f;
+          color:#fff;
+          border-radius:16px;
+          padding:18px 22px 16px 22px;
+          box-shadow:0 2px 6px rgba(0,0,0,.2);
+          margin-top:20px;
+          font-family:sans-serif;
+        }
+        """
+    ):
+        st.markdown("### ✨ Magical Recommendations")
+
+        # Render každé doporučení
+        for i, rec in enumerate(recommendations):
+            if i in st.session_state["dismissed_recs"]:
+                continue  # přeskoč už skryté
+
+            c1, c2 = st.columns([0.82, 0.18], vertical_alignment="center")
+            with c1:
+                st.markdown(f"<div class='rec-row'>", unsafe_allow_html=True)
+                st.markdown(f"<div class='rec-title'>{rec['title']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='rec-why'>{rec['why']}</div>", unsafe_allow_html=True)
+                tags_html = " ".join([f"<span class='rec-chip'>{t}</span>" for t in rec["tags"]])
+                st.markdown(tags_html, unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+            with c2:
+                launch = st.button("Launch", key=f"rec_launch_{i}")
+                dismiss = st.button("✖", key=f"rec_dismiss_{i}")
+
+                if launch:
+                    st.success(f"Launched: {rec['title']}")
+                    # TODO: zavolej backend akci / AI engine
+                if dismiss:
+                    st.session_state["dismissed_recs"].add(i)
+                    st.experimental_rerun()
+
+        st.markdown("---")
+        ask_more = st.button("Ask AI marketer to do more", key="ask_ai_marketer")
+        if ask_more:
+            st.info("TODO: Trigger AI marketer – pošli prompt na backend/AI engine.")
+    # -------------- END MAGICAL RECOMMENDATIONS BOX --------------
+
+
+    # -------------- CAMPAIGNS --------------------------
     with stylable_container(
         key="camp_card",
         css_styles="""
@@ -263,33 +399,6 @@ if page == "Ads Dashboard":
         }
         """
     ):
-        # --- přidej TENTO CSS blok pro tlačítko ---
-        st.markdown("""
-        <style>
-        /* Styluj přímo JAKÉKOLI tlačítko uvnitř #camp_card */
-        #camp_card button{
-            background:linear-gradient(90deg,#818cf8,#6366f1) !important;
-            border:0 !important;
-            border-radius:8px !important;
-            padding:6px 16px !important;
-            box-shadow:0 2px 4px rgba(0,0,0,.25);
-            cursor:pointer;
-        }
-        #camp_card button:hover{
-            filter:brightness(1.12);
-        }
-
-        /* Donutíme text být bílý a čitelný – chytáme všechny možné vnořené tagy */
-        #camp_card button, 
-        #camp_card button *{
-            color:#ffffff !important;
-            font-weight:600 !important;
-            font-size:13px !important;
-            letter-spacing:0.2px;
-            text-shadow:0 0 2px rgba(0,0,0,.4);
-        }
-        </style>
-        """, unsafe_allow_html=True)
 
         st.markdown("""
         <style>
