@@ -1,18 +1,52 @@
 # frontend/utils.py
-import streamlit as st
-import pandas as pd
+"""
+Small utilities used by the Streamlit UI.
+Behavior parity with original display_campaigns implementation.
+"""
 
-def display_campaigns(data):
-    total_spend = 0
-    total_revenue = 0
-    roas_values = []
+from __future__ import annotations
+
+from typing import Any, Dict, Iterable, List
+
+import streamlit as st
+
+
+def _safe_roas(revenue: float, spend: float) -> float:
+    """Return ROAS or 0 when spend is 0 (preserves original logic)."""
+    return (revenue / spend) if spend > 0 else 0.0
+
+
+def display_campaigns(data: List[Dict[str, Any]]) -> None:
+    """
+    Render campaigns tree and a simple goals section below it.
+
+    Expected input shape:
+    [
+      {
+        "account_id": "...",
+        "campaigns": [
+          {
+            "id": "...", "name": "...", "objective": "...",
+            "spend": <float>, "revenue": <float>,  # may be absent depending on backend param
+            "adsets": [
+              {"id": "...", "name": "...", "ads": [{"id": "...", "name": "..."}, ...]},
+              ...
+            ]
+          }, ...
+        ]
+      }, ...
+    ]
+    """
+    total_spend = 0.0
+    total_revenue = 0.0
+    roas_values: List[float] = []
 
     for account in data:
         st.subheader(f"Účet: {account['account_id']}")
         for campaign in account["campaigns"]:
-            spend = campaign.get("spend", 0)
-            revenue = campaign.get("revenue", 0)
-            roas = revenue / spend if spend > 0 else 0
+            spend = float(campaign.get("spend", 0) or 0.0)
+            revenue = float(campaign.get("revenue", 0) or 0.0)
+            roas = _safe_roas(revenue, spend)
 
             total_spend += spend
             total_revenue += revenue
