@@ -709,6 +709,9 @@ def form_create_ad() -> None:
     st.subheader("📢 Vytvořit Ad")
 
     with st.form("create_ad_form"):
+        # ✅ Přidej sběr account_id (stejné označení jako v dalších formulářích)
+        account_id = st.text_input("Ad Account ID (bez 'act_')", key="ad_account_id")
+
         adset_id = st.text_input("Ad Set ID", key="ad_adset_id")
         ad_name = st.text_input("Název reklamy", key="ad_name")
         creative_id = st.text_input("Creative ID", key="ad_creative_id")
@@ -717,12 +720,23 @@ def form_create_ad() -> None:
         submit_ad = st.form_submit_button("Vytvořit Ad")
 
         if submit_ad:
-            payload = {"adset_id": adset_id, "name": ad_name, "creative_id": creative_id, "status": status}
-            res = requests.post(f"{API_BASE}/create_ad", json=payload)
-            if res.status_code == 200:
-                st.success(f"Reklama vytvořena: {res.json()}")
+            # (volitelné) rychlá validace, ať neposíláme prázdný účet
+            if not account_id:
+                st.error("Vyplň prosím Ad Account ID (bez 'act_').")
             else:
-                st.error(f"Chyba: {res.text}")
+                payload = {
+                    "account_id": account_id,   # ✅ DOPLNĚNO
+                    "adset_id": adset_id,
+                    "name": ad_name,
+                    "creative_id": creative_id,
+                    "status": status,
+                }
+                res = requests.post(f"{API_BASE}/create_ad", json=payload)
+                if res.status_code == 200:
+                    st.success(f"Reklama vytvořena: {res.json()}")
+                else:
+                    st.error(f"Chyba: {res.text}")
+
 
 
 def form_upload_image() -> None:

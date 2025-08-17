@@ -12,3 +12,11 @@ python-multipart
 aiofiles
 Pillow
 streamlit-extras
+
+pytest
+pytest-asyncio
+respx>=0.21
+starlette
+anyio
+SQLAlchemy>=2
+aiosqlite

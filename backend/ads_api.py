@@ -14,7 +14,7 @@ load_dotenv()
 
 ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN")
 # Keep the original version to preserve behavior
-BASE_URL = "https://graph.facebook.com/v17.0"
+BASE_URL = "https://graph.facebook.com/v23.0"
 
 if not ACCESS_TOKEN:
     # Do not raise here – many callers import this module at import-time.
